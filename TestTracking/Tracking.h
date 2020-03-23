@@ -4,11 +4,14 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <ctime>
 #include "iface.h"
 
 #define BUFFER_LENGTH	1024
 #define CHAR_LENGTH		256
 #define NUM_TRACKED_OBJECTS	5
+#define NUM_COORDINATES_X_IMAGE  4
+#define COORDINATES_X_ALL_IMAGES 20
 
 using namespace std;
 
@@ -19,7 +22,7 @@ public:
 	~Tracking();
 	bool InitLibrary();
 	void InitITracking();
-	void FaceTracking(char* data, int size);
+	void FaceTracking(std::vector<unsigned char> vectorData);
 	void SetMinEyeDistance(int value) {
 		minEyeDistance = value;
 	}
@@ -53,9 +56,24 @@ public:
 	}
 
 	void SetSequenceFps(int value) {
-		sequenceFps = value;
-		timeDeltaMs = 1000 / sequenceFps;
+		if (value != 0)
+		{
+			sequenceFps = value;
+			timeDeltaMs = 1000 / sequenceFps;
+		}
+		
 	}
+
+	bool GetFlagTracking() {
+		return flagTracking;
+	}
+
+	void SetFlagTracking(bool value) {
+		flagTracking = value;
+	}
+
+	float* GetCoordiantesRectangle();
+	double* GetColorRectangle();
 
 private:
 	int minEyeDistance = 20;          // minimal eye distance in input image
@@ -67,10 +85,11 @@ private:
 	string deepTrack = "true";
 	int sequenceFps = 30;                   // fps of video	
 	int timeDeltaMs = 1000 / sequenceFps;
-	int countFrameTracking = 0;
-	void* objectHandler;
-	void* faceHandlerTracking;
-	void* objects[NUM_TRACKED_OBJECTS];
+	long countFrameTracking = 0;
+	int sizeVideoStream = 0;
+	void* objectHandler = nullptr;
+	void* faceHandlerTracking = nullptr;
+	void* objects[NUM_TRACKED_OBJECTS] = {};
 	int refreshInterval = 2000;
 	bool flagFirstDetect = false;
 	bool flagTracking = false;
@@ -78,6 +97,8 @@ private:
 	string IntToStr(int num);
 	unsigned char* LoadImageOfMemory(vector<unsigned char> buffer,
 		int *width, int *height);
+	void AdvanceVideoStream();
+	void ResetCoordinates();
 	void TrackObjectState();
 	void TerminateITracking();
 	void Terminate();

@@ -1,5 +1,8 @@
 #include "Tracking.h"
 
+float imageCoordinatesFollowed[COORDINATES_X_ALL_IMAGES] = {};
+double colorRectangle[NUM_TRACKED_OBJECTS] = {};
+
 Tracking::Tracking()
 {
 }
@@ -169,7 +172,7 @@ void Tracking::InitITracking() {
 	if (errorCode != IFACE_OK) {
 		cout << GetMessageError(errorCode).c_str() << endl;
 	}
-
+	sizeVideoStream = refreshInterval / timeDeltaMs;
 	flagTracking = false;
 	flagFirstDetect = false;
 }
@@ -199,17 +202,77 @@ unsigned char* Tracking::LoadImageOfMemory(vector<unsigned char> buffer,
 
 }
 
-void Tracking::FaceTracking(char* data, int size) {
+void ClearCoordinatesImage(int indexTracked) {
+	int index = indexTracked * NUM_COORDINATES_X_IMAGE;
+	imageCoordinatesFollowed[index] = 0;
+	imageCoordinatesFollowed[index + 1] = 0;
+	imageCoordinatesFollowed[index + 2] = 0;
+	imageCoordinatesFollowed[index + 3] = 0;
+}
+
+void BuildCoordinatesImage(float x, float y, float width, float height, int indexTracked) {
+	int index = indexTracked * NUM_COORDINATES_X_IMAGE;
+	imageCoordinatesFollowed[index] = x;
+	imageCoordinatesFollowed[index + 1] = y;
+	imageCoordinatesFollowed[index + 2] = width;
+	imageCoordinatesFollowed[index + 3] = height;
+}
+
+float* Tracking::GetCoordiantesRectangle() {
+	return imageCoordinatesFollowed;
+}
+
+double* Tracking::GetColorRectangle() {
+	return colorRectangle;
+}
+
+void Tracking::AdvanceVideoStream() {	
+	int positionVideoStream = (countFrameTracking / sizeVideoStream) + 1;
+	int positionFrameMaxVideoStream = sizeVideoStream * positionVideoStream;
+
+	if (countFrameTracking < positionFrameMaxVideoStream)
+	{
+		countFrameTracking = positionFrameMaxVideoStream;
+	}
+}
+
+void ClearAllCoordinatesImage() {
+	for (int i = 0; i < NUM_TRACKED_OBJECTS; i++) {
+		ClearCoordinatesImage(i);
+	}
+}
+
+void Tracking::ResetCoordinates() {
+	long countFrames = countFrameTracking - 1;
+	int residue = countFrames % sizeVideoStream;
+	if (residue == 0)
+	{
+		ClearAllCoordinatesImage();
+	}
+}
+
+void SetColorRectangle(float score, int indexObject) {
+	double percentageScore = ((double)score * 100.0) / 10000.0;
+	double variationColor = (255.0 * percentageScore) / 100.0;
+	double color = (255.0 - variationColor);
+	colorRectangle[indexObject] = color;
+}
+
+void Tracking::FaceTracking(std::vector<unsigned char> vectorData) {
 	int width, height, errorCode; 
 
-	unsigned char* ucharData = reinterpret_cast<unsigned char*> (data);
-	std::vector<unsigned char> vectorData(ucharData, ucharData + size);
 	unsigned char* rawImageData = LoadImageOfMemory(vectorData, &width, &height);
 	
 	if (rawImageData != NULL) {
-
+		long secuence = countFrameTracking * timeDeltaMs;
+		ResetCoordinates();
+		clock_t timeStart1 = clock();
 		errorCode = IFACE_TrackObjects(objectHandler, rawImageData,
-			width, height, countFrameTracking*timeDeltaMs, NUM_TRACKED_OBJECTS, objects);
+			width, height, secuence, NUM_TRACKED_OBJECTS, objects);
+		clock_t duration1 = clock() - timeStart1;
+		int durationMs1 = int(1000 * ((float)duration1) / CLOCKS_PER_SEC);
+		//printf("   TRACKING OBJECT time: %d \n", durationMs1);
+
 		if (errorCode != IFACE_OK) {
 			cout << GetMessageError(errorCode).c_str() << endl;
 		}
@@ -238,29 +301,35 @@ void Tracking::TrackObjectState() {
 		}
 
 		if (trackedState == IFACE_TRACKED_OBJECT_STATE_CLEAN) {
-
 			
-			/*countDesolation++;
+			countDesolation++;
 			if (countDesolation == NUM_TRACKED_OBJECTS && !flagFirstDetect)
 			{
 				AdvanceVideoStream();
-			}*/
-			//cout << "STATE_CLEAN" << endl;
+			}
+			
 			continue;
 		}
 				
 		switch (trackedState)
 		{
 		case IFACE_TRACKED_OBJECT_STATE_TRACKED:
-			//flagFirstDetect = true;
+			flagFirstDetect = true;
+			float objectScore;
 			errorCode = IFACE_GetObjectBoundingBox(objects[trackedObjectIndex],
 				objectHandler, &bbX, &bbY, &bbWidth, &bbHeight);
 			if (errorCode != IFACE_OK) {
 				cout << GetMessageError(errorCode).c_str() << endl;
+			}			
+			BuildCoordinatesImage(bbX, bbY, bbWidth, bbHeight, trackedObjectIndex);
+
+			errorCode = IFACE_GetObjectScore(objects[trackedObjectIndex], 
+				objectHandler, &objectScore);
+			if (errorCode != IFACE_OK) {
+				cout << GetMessageError(errorCode).c_str() << endl;
 			}
-			
-			//BuildCoordinatesImage(bbX, bbY, bbWidth, bbHeight, trackedObjectIndex);
-			printf("   face id is TRACKED. Its bounding box :(%f, %f), (%f, %f), Face score : , Object score : \n", bbX, bbY, bbWidth, bbHeight);
+			SetColorRectangle(objectScore, trackedObjectIndex);
+			//printf("   face id is TRACKED. Its bounding box :(%f, %f), (%f, %f), Face score : , Object score : \n", bbX, bbY, bbWidth, bbHeight);
 			break;
 		case IFACE_TRACKED_OBJECT_STATE_COVERED:
 			errorCode = IFACE_GetObjectBoundingBox(objects[trackedObjectIndex],
@@ -268,35 +337,35 @@ void Tracking::TrackObjectState() {
 			if (errorCode != IFACE_OK) {
 				cout << GetMessageError(errorCode).c_str() << endl;
 			}
-			printf("   face id is COVERED. Its bounding box :(%f, %f), (%f, %f), Face score : , Object score : \n", bbX, bbY, bbWidth, bbHeight);
+			//printf("   face id is COVERED. Its bounding box :(%f, %f), (%f, %f), Face score : , Object score : \n", bbX, bbY, bbWidth, bbHeight);
 
-			//BuildCoordinatesImage(bbX, bbY, bbWidth, bbHeight, trackedObjectIndex);
+			BuildCoordinatesImage(bbX, bbY, bbWidth, bbHeight, trackedObjectIndex);
 			break;
 		case IFACE_TRACKED_OBJECT_STATE_SUSPEND:
-			//ClearCoordinatesImage(trackedObjectIndex);
-			printf("STATE SUSPEND INDEX: %d\n", trackedObjectIndex);
+			ClearCoordinatesImage(trackedObjectIndex);
+			//printf("STATE SUSPEND INDEX: %d\n", trackedObjectIndex);
 
 			break;
 		case IFACE_TRACKED_OBJECT_STATE_LOST:
-			//ClearCoordinatesImage(trackedObjectIndex);
+			ClearCoordinatesImage(trackedObjectIndex);
 			void *newObj;
 			errorCode = IFACE_CreateObject(&newObj);
 			objects[trackedObjectIndex] = newObj;
 			if (errorCode != IFACE_OK) {
 				cout << GetMessageError(errorCode).c_str() << endl;
 			}
-			//flagFirstDetect = false;
-			printf("STATE LOST INDEX: %d\n", trackedObjectIndex);
+			flagFirstDetect = false;
+			//printf("STATE LOST INDEX: %d\n", trackedObjectIndex);
 
 			break;
 		case IFACE_TRACKED_OBJECT_STATE_CLEAN:
-			printf("STATE LOST CLEAN OBJECT INDEX: %d\n", trackedObjectIndex);
+			//printf("STATE LOST CLEAN OBJECT INDEX: %d\n", trackedObjectIndex);
 
 			break;
 		}
 
 	}
-	//countFrameTracking++;
+	countFrameTracking++;
 }
 
 string Tracking::GetMessageError(int errorCode) {

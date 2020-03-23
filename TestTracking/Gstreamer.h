@@ -51,7 +51,7 @@ private:
 	int videoScaleMethod = 1; //3 1
 	int widthFrame = 640;
 	int heightFrame = 480;
-	GstElement* pipeline;
+	GstElement* pipeline = nullptr;
 	
 	gchar* DescriptionPipeline(int optionInput);
 
