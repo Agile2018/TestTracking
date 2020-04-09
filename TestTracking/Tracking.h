@@ -6,6 +6,10 @@
 #include <vector>
 #include <ctime>
 #include "iface.h"
+#include "GraphicProcessor.h"
+#include "File.h"
+#include "Format.h"
+#include <thread>
 
 #define BUFFER_LENGTH	1024
 #define CHAR_LENGTH		256
@@ -71,11 +75,16 @@ public:
 	void SetFlagTracking(bool value) {
 		flagTracking = value;
 	}
+	void SetIsGraphicProcessor(bool processor) {
+		isGraphicProcessor = processor;
+	}
 
 	float* GetCoordiantesRectangle();
 	double* GetColorRectangle();
-
+	void SetParamsLibrary();
 private:
+	const string directory = "Log";
+	const string nameFile = "log.txt";
 	int minEyeDistance = 20;          // minimal eye distance in input image
 	int maxEyeDistance = 200;         // maximal eye distance in input image
 	int faceConfidenceThresh = 450;         // face detection confidence threshold		
@@ -90,16 +99,23 @@ private:
 	void* objectHandler = nullptr;
 	void* faceHandlerTracking = nullptr;
 	void* objects[NUM_TRACKED_OBJECTS] = {};
+	bool isGraphicProcessor = false;
 	int refreshInterval = 2000;
 	bool flagFirstDetect = false;
 	bool flagTracking = false;
+	GraphicProcessor* graphicProcessor = new GraphicProcessor();
+	File* manageFile = new File();
+	Format* format = new Format();
 	string GetMessageError(int errorCode);
 	string IntToStr(int num);
 	unsigned char* LoadImageOfMemory(vector<unsigned char> buffer,
 		int *width, int *height);
 	void AdvanceVideoStream();
+	bool InitParamsGraphicProcessor();
 	void ResetCoordinates();
-	void TrackObjectState();
+	void TrackObjectState(string descriptionTimes);
+	void SaveInformationTracking(string descriptionBefore,
+		int indexObject, bool track);
 	void TerminateITracking();
 	void Terminate();
 };

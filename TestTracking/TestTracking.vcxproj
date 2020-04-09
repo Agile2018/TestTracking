@@ -144,24 +144,31 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>C:\Program Files\Innovatrics\IFace SDK\include;F:\gstreamer\1.0\x86_64\include\gstreamer-1.0;F:\gstreamer\1.0\x86_64\include\glib-2.0;F:\gstreamer\1.0\x86_64\lib\glib-2.0\include;F:\gstreamer\1.0\x86_64\include;D:\opencv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.2\common\inc;C:\Program Files\Innovatrics\IFace SDK\include;F:\gstreamer\1.0\x86_64\include\gstreamer-1.0;F:\gstreamer\1.0\x86_64\include\glib-2.0;F:\gstreamer\1.0\x86_64\lib\glib-2.0\include;F:\gstreamer\1.0\x86_64\include;D:\opencv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\Innovatrics\IFace SDK\lib;F:\gstreamer\1.0\x86_64\lib;D:\opencv\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gobject-2.0.lib;glib-2.0.lib;gstreamer-1.0.lib;gstapp-1.0.lib;opencv_world420.lib;iface.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\lib\x64;C:\Program Files\Innovatrics\IFace SDK\lib;F:\gstreamer\1.0\x86_64\lib;D:\opencv\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gobject-2.0.lib;glib-2.0.lib;gstreamer-1.0.lib;gstapp-1.0.lib;opencv_world420.lib;iface.lib;cudart_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="File.h" />
+    <ClInclude Include="Format.h" />
+    <ClInclude Include="GraphicProcessor.h" />
     <ClInclude Include="Gstreamer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Tracking.h" />
+    <ClInclude Include="Video.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="File.cpp" />
+    <ClCompile Include="Format.cpp" />
+    <ClCompile Include="GraphicProcessor.cpp" />
     <ClCompile Include="Gstreamer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -171,6 +178,7 @@
     </ClCompile>
     <ClCompile Include="TestTracking.cpp" />
     <ClCompile Include="Tracking.cpp" />
+    <ClCompile Include="Video.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

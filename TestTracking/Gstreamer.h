@@ -9,6 +9,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include "Tracking.h"
+#include "Video.h"
 
 using namespace std;
 

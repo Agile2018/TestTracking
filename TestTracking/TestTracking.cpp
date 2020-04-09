@@ -12,6 +12,8 @@ int main()
 	Gstreamer* gstreamer = new Gstreamer();
 
 	//****************
+	//tracking->SetIsGraphicProcessor(false);
+	tracking->SetParamsLibrary();
 	if (tracking->InitLibrary())
 	{
 		tracking->SetMinEyeDistance(20);
@@ -22,8 +24,8 @@ int main()
 		tracking->SetTrackingMode(2); //0:DEFAULT 1:LIVENESS_DOT 2:OBJECT_TRACKING
 		tracking->SetTrackSpeed(2); //0:MODE_ACCURATE 1:MODE_BALANCED 2:MODE_FAST
 		tracking->SetMotionOptimization(1); //0:DISABLED 1:HISTORY_LONG_ACCURATE 2:HISTORY_LONG_FAST 3:HISTORY_SHORT
-		tracking->SetDeepTrack("true");
-		tracking->InitITracking();
+		tracking->SetDeepTrack("true");		
+		tracking->InitITracking();		
 		gstreamer->SetTracking(tracking);
 		gstreamer->SetFileVideo("camargo.mp4");	
 		//gstreamer->SetIpCamera("rtsp://root:admin@192.168.0.4:554/axis-media/media.amp");

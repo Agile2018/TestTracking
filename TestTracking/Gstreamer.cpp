@@ -3,6 +3,7 @@
 cv::Mat frame;
 GMainLoop *loop;
 Tracking* tracking = new Tracking();
+static Video* video = new Video();
 
 Gstreamer::Gstreamer()
 {
@@ -16,9 +17,9 @@ void Gstreamer::SetTracking(Tracking* track) {
 	tracking = track;
 }
 
-static gboolean MessageErrorCallback(GstBus *bus, GstMessage *message, gpointer data)
+gboolean MessageErrorCallback(GstBus *bus, GstMessage *message, gpointer data)
 {
-
+	
 	switch (GST_MESSAGE_TYPE(message)) {
 	case GST_MESSAGE_ERROR: {
 		GError *err;
@@ -32,7 +33,7 @@ static gboolean MessageErrorCallback(GstBus *bus, GstMessage *message, gpointer 
 	}
 	case GST_MESSAGE_EOS:
 		/* end-of-stream */
-		g_print("End: %s\n", "end-of-stream");
+		g_print("End: %s\n", "end-of-stream");		
 		g_main_loop_quit(loop);
 		break;
 	default:
@@ -199,7 +200,10 @@ GstFlowReturn CaptureGstBuffer(GstAppSink *sink, gpointer user_data)
 		g_print("caps: %s\n", gst_caps_to_string(caps));
 	}
 	framecount++;
-
+	/*if (framecount == 50)
+	{
+		video->SetDestroy(true);
+	}*/
 
 	GstMapInfo map_info;
 
@@ -228,9 +232,9 @@ GstFlowReturn CaptureGstBuffer(GstAppSink *sink, gpointer user_data)
 		if (!frame.empty()) {
 			
 			DrawRectangles(frame);
-			
-			cv::imshow("test-gstreamer-video", frame);
-			cv::waitKey(1);
+			video->Play(frame);
+			/*cv::imshow("test-gstreamer-video", frame);
+			cv::waitKey(1);*/
 		}
 	}
 	catch (const std::exception& ex)
